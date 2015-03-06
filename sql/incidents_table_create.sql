@@ -1,9 +1,5 @@
 -- Create the incidents table
 
--- Table: public.event
-
--- DROP TABLE public.event;
-
 CREATE TABLE public.incident
 (
   id BIGSERIAL NOT NULL,
@@ -14,7 +10,7 @@ CREATE TABLE public.incident
   type varchar(255),
   	CHECK(type in('Attempted', 'Actual')),
   action varchar(255),
-  	CHECK(action in ('Attempted', 'Boarded', 'Detained', 'Fired Upon', 'Missing')),
+  	CHECK(action in ('Hijacked', 'Boarded', 'Fired Upon', 'Attempted', 'Missing', 'Detaining')),
   latitude decimal NOT NULL,
   longitude decimal NOT NULL,
   closest_country_id integer NOT NULL DEFAULT 0,

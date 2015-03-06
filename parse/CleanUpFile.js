@@ -29,6 +29,7 @@ function cleanUpFile(argv) {
 				array[i] = array[i].replace(/ /g,"_");
 			}
 			line = array.join();
+			firstLine = false;
 		}
 
 		if(line.length > 0) {

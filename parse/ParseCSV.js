@@ -22,7 +22,7 @@ var argv = process.argv;
 *****************************************************/
 
 //printFile();
-//getColumnNames();
+getColumnNames();
 agregateColumnValues();
 
 
@@ -43,7 +43,7 @@ function printFile() {
 
 // Convert the file at fileName to a JSON object
 function csvFileToJSON(callback) {
-	var fileStream = fs.createReadStream(fileName);
+	var fileStream = fs.createReadStream(process.argv[2]);
 	var csvConverter = new Converter({
 		constructResult: true
 	});
