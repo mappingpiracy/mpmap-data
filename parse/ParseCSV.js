@@ -22,7 +22,7 @@ var argv = process.argv;
 *****************************************************/
 
 //printFile();
-getColumnNames();
+//getColumnNames();
 agregateColumnValues();
 
 

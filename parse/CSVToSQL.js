@@ -15,30 +15,33 @@ var Converter = csvtojson.core.Converter;
 var fileName = process.argv[2];
 var argv = process.argv;
 
-insertAll();
-
+insertIncidents();
 
 // parse spreadsheet and create insert statement
-function insertAll() {
+function insertIncidents() {
 
 	csvFileToJSON(fileName, function(data) {
 		for (var d in data) {
-			var item = data[d], referenceId, occurredOn, timeDay, type, action, latitude, longitude, closestCountryId,
-			waterCountryId, locationDescription, vesselName, vesselType, vesselCountryId, violenceDummy;
+			var item = data[d],
+				referenceId, occurredOn, timeDay, type, action, latitude, longitude, closestCountryId,
+				waterCountryId, locationDescription, vesselName, vesselType, vesselCountryId, violenceDummy;
 
 			referenceId = item['incident_reference'];
 
-			occurredOn = new Date(item['year'], (item['month'] - 1), item['day']);
+			occurredOn = new Date(1993, 0, 1);
+			if (Math.floor(item['year']) === item['year']) occurredOn.setFullYear(item['year']);
+			if (Math.floor(item['month']) === item['month']) occurredOn.setMonth(item['month']);
+			if (Math.floor(item['day']) === item['day']) occurredOn.setDate(item['day']);
 
 			timeDay = item['time_day'];
 			if (timeDay === 1) {
-				timeDay = '6:00 AM - 12:00 PM';
+				timeDay = '6:01-12:00';
 			} else if (timeDay === 2) {
-				timeDay = '12:01 PM - 6:00 PM';
+				timeDay = '12:01-18:00';
 			} else if (timeDay === 3) {
-				timeDay = '6:01 PM - 12:00 AM';
+				timeDay = '18:01-00:00';
 			} else if (timeDay === 4) {
-				timeDay = '12:01 AM - 6:00 PM';
+				timeDay = '00:01-6:00';
 			} else {
 				timeDay = null;
 			}
@@ -71,43 +74,47 @@ function insertAll() {
 				action = null;
 			}
 
+			// if latitude or longitude is null, completely ignore it
+			if (item['lat_decimal_degrees'].length === 0 || item['long_decimal_degrees'].length === 0) continue;
 			latitude = item['lat_decimal_degrees'];
 			longitude = item['long_decimal_degrees'];
 
-			closestCountryId = item['closest_state_cow_code'];
-			if (closestCountryId === '') {
-				closestCountryId = null;
+			if (item['closest_state_cow_code'].length === 0) {
+				closestCountryId = 0;
+			} else {
+				closestCountryId = item['closest_state_cow_code'];
 			}
 
 			waterCountryId = item['territorial_water_status'];
-			if (waterCountryId === '') {
-				waterCountryId = null;
-			} else {
-				waterCountryId = countries.getCowId(waterCountryId)
-			}
+			waterCountryId = countries.getCowId(waterCountryId)
+			if (waterCountryId === null) waterCountryId = closestCountryId;
 
 			locationDescription = item['location_description'];
 
 			vesselName = item['vessel_name'];
 
-			vesselType = ['TBD'];
+			vesselType = ['\'TBD\''];
 
+			/* 
+				vessel country id is an array of integers. 
+				if it is not specified as a positive integer or in rare cases
+				several positive integers separated by ampersands, it should
+				be set to [0]
+			*/
 			vesselCountryId = item['flag_cow_code'];
-			if(vesselCountryId === -99) {
-				vesselCountryId = [];
-			} else if(vesselCountryId != Math.floor(vesselCountryId)) {	//not an integer
-				if(vesselCountryId.indexOf('&') > 0) {
-					vesselCountryId = vesselCountryId.replace(' & ', ',');
-				} 
+			if (Math.floor(vesselCountryId) === vesselCountryId && vesselCountryId > 0) {
+				vesselCountryId = [vesselCountryId];
+			} else if (vesselCountryId.toString().indexOf('&') > 0) {
+				vesselCountryId = vesselCountryId.replace(' & ', ',');
 				vesselCountryId = vesselCountryId.split(',');
 			} else {
-				vesselCountryId = [vesselCountryId];
+				vesselCountryId = [0];
 			}
 
 			violenceDummy = item['violence_dummy'];
-			if(violenceDummy === 1) {
+			if (violenceDummy === 1) {
 				violenceDummy = 'true';
-			} else if(violenceDummy === 0) {
+			} else if (violenceDummy === 0) {
 				violenceDummy = 'false';
 			} else {
 				violenceDummy = null;
@@ -117,8 +124,9 @@ function insertAll() {
 				col: 'reference_id',
 				val: referenceId
 			}, {
-				col: 'occured_on',
-				val: occurredOn
+				col: 'occurred_on',
+				val: occurredOn,
+				cast: 'timestamp'
 			}, {
 				col: 'time_day',
 				val: timeDay
@@ -148,10 +156,12 @@ function insertAll() {
 				val: vesselName
 			}, {
 				col: 'vessel_type',
-				val: vesselType
+				val: vesselType,
+				cast: 'text[]'
 			}, {
 				col: 'vessel_country_id',
-				val: vesselCountryId
+				val: vesselCountryId,
+				cast: 'integer[]'
 			}, {
 				col: 'violence_dummy',
 				val: violenceDummy
@@ -160,20 +170,51 @@ function insertAll() {
 			rowInsert('incident', row);
 
 		}
-
 	});
 
 }
 
-
 // Generic insert statement
 function rowInsert(table, row) {
-	
+	var sql = 'INSERT INTO ' + table,
+		cols = [],
+		vals = [],
+		tmp;
+
 	row.forEach(function(element) {
-		console.log(element);
-		
+		if (element.val instanceof Date) {
+			tmp = [element.val.getFullYear(), (element.val.getMonth() + 1), element.val.getDate()].join('-');
+			tmp += ' ';
+			tmp += [element.val.getHours(), element.val.getMinutes(), element.val.getSeconds()].join(':');
+			element.val = escapeString(tmp);
+		} else if (element.val === null || element.val === '' || element.val === undefined) {
+			element.val = 'NULL';
+		} else if (element.val instanceof Array && element.val.length > 0) {
+			element.val = 'ARRAY[' + element.val.join(',') + ']';
+		} else {
+			element.val = escapeString(element.val);
+		}
+
+		if (element.hasOwnProperty('cast')) {
+			element.val += '::' + element.cast;
+		}
+
+		cols.push(element.col);
+		vals.push(element.val);
+
 	});
 
+	sql += ' (' + cols.join() + ') VALUES (' + vals.join() + ');'
+	console.log(sql);
+}
+
+function escapeString(s) {
+	if (s === null) return 'NULL';
+	s = s.toString();
+	s = s.replace(/'/g, "''");
+	s = s.replace(/"/g, '""');
+	s = '\'' + s + '\'';
+	return s;
 }
 
 // Convert the file at fileName to a JSON object
