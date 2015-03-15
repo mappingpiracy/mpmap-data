@@ -23,15 +23,16 @@ function insertIncidents() {
 	csvFileToJSON(fileName, function(data) {
 		for (var d in data) {
 			var item = data[d],
-				referenceId, occurredOn, timeDay, type, action, latitude, longitude, closestCountryId,
-				waterCountryId, locationDescription, vesselName, vesselType, vesselCountryId, violenceDummy;
+				referenceId, date, timeDay, type, action, latitude, longitude, closestCountryId,
+				waterCountryId, locationDescription, vesselName, vesselType, vesselCountryId, violenceDummy,
+				vesselStatus;
 
 			referenceId = item['incident_reference'];
 
-			occurredOn = new Date(1993, 0, 1);
-			if (Math.floor(item['year']) === item['year']) occurredOn.setFullYear(item['year']);
-			if (Math.floor(item['month']) === item['month']) occurredOn.setMonth(item['month']);
-			if (Math.floor(item['day']) === item['day']) occurredOn.setDate(item['day']);
+			date = new Date(1993, 0, 1);
+			if (Math.floor(item['year']) === item['year']) date.setFullYear(item['year']);
+			if (Math.floor(item['month']) === item['month']) date.setMonth(item['month']);
+			if (Math.floor(item['day']) === item['day']) date.setDate(item['day']);
 
 			timeDay = item['time_day'];
 			if (timeDay === 1) {
@@ -111,6 +112,19 @@ function insertIncidents() {
 				vesselCountryId = [0];
 			}
 
+			vesselStatus = item['steaming_recode'];
+			if(vesselStatus === 1) {
+				vesselStatus = 'Steaming';
+			} else if(vesselStatus === 2) {
+				vesselStatus = 'Anchored';
+			} else if(vesselStatus === 3) {
+				vesselStatus = 'Berthed';
+			} else if(vesselStatus === 4) {
+				vesselStatus = 'Statinary';
+			} else {
+				vesselStatus = null;
+			}
+
 			violenceDummy = item['violence_dummy'];
 			if (violenceDummy === 1) {
 				violenceDummy = 'true';
@@ -124,8 +138,8 @@ function insertIncidents() {
 				col: 'reference_id',
 				val: referenceId
 			}, {
-				col: 'occurred_on',
-				val: occurredOn,
+				col: 'date',
+				val: date,
 				cast: 'timestamp'
 			}, {
 				col: 'time_day',
@@ -162,6 +176,9 @@ function insertIncidents() {
 				col: 'vessel_country_id',
 				val: vesselCountryId,
 				cast: 'integer[]'
+			}, {
+				col: 'vessel_status',
+				val: vesselStatus
 			}, {
 				col: 'violence_dummy',
 				val: violenceDummy

@@ -4,7 +4,7 @@ CREATE TABLE public.incident
 (
   id BIGSERIAL NOT NULL,
   reference_id integer NOT NULL,
-  occurred_on timestamp with time zone NOT NULL,
+  date timestamp with time zone NOT NULL,
   time_day varchar(255),
   	CHECK(time_day in ('6:01-12:00', '12:01-18:00', '18:01-00:00', '00:01-6:00', NULL)),
   type varchar(255),
@@ -19,6 +19,8 @@ CREATE TABLE public.incident
   vessel_name text,
   vessel_type text[],
   vessel_country_id integer[] NOT NULL DEFAULT ARRAY[0],
+  vessel_status varchar(255),
+    CHECK(vessel_status in('Steaming', 'Anchored', 'Berthed', 'Stationary', NULL)),
   violence_dummy boolean,
   CONSTRAINT primary_key PRIMARY KEY (id, reference_id)
 )
