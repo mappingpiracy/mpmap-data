@@ -120,7 +120,7 @@ function insertIncidents() {
 			} else if(vesselStatus === 3) {
 				vesselStatus = 'Berthed';
 			} else if(vesselStatus === 4) {
-				vesselStatus = 'Statinary';
+				vesselStatus = 'Stationary';
 			} else {
 				vesselStatus = null;
 			}
