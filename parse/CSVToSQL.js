@@ -94,7 +94,28 @@ function insertIncidents() {
 
 			vesselName = item['vessel_name'];
 
-			vesselType = ['\'TBD\''];
+			vesselType = item['vessel_type'];
+			if (vesselType === 1) {
+				vesselType = 'Barge or Tug';
+			} else if (vesselType === 2) {
+				vesselType = 'Carrier';
+			} else if (vesselType === 3) {
+				vesselType = 'Chemical Tanker';
+			} else if (vesselType === 4) {
+				vesselType = 'Container Ship';
+			} else if (vesselType === 5) {
+				vesselType = 'Fishing Boat, Trawler, or Vessel';
+			} else if (vesselType === 6) {
+				vesselType = 'General Cargo';
+			} else if (vesselType === 7) {
+				vesselType = 'LNG, LPG, or Oil Tanker';
+			} else if (vesselType === 8) {
+				vesselType = 'Tanker or Produce Tanker';
+			} else if (vesselType === 9) {
+				vesselType = 'Yacht, Leisure Craft, or Passenger Ship';
+			} else {
+				vesselType = null;
+			}
 
 			/* 
 				vessel country id is an array of integers. 
@@ -170,8 +191,7 @@ function insertIncidents() {
 				val: vesselName
 			}, {
 				col: 'vessel_type',
-				val: vesselType,
-				cast: 'text[]'
+				val: vesselType
 			}, {
 				col: 'vessel_country_id',
 				val: vesselCountryId,
