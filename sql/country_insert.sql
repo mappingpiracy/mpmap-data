@@ -1,13 +1,5 @@
 
-CREATE TABLE IF NOT EXISTS country(
-	id SERIAL not null,
-	cow_id integer not null,
-	name varchar(255) not null,
-	abbreviation varchar(5) not null,
-	primary key(id, cow_id)
-);
-
-INSERT INTO country(cow_id, name, abbreviation) VALUES
+INSERT INTO country("id", "name", "shortName") VALUES
 (2,'United States of America','USA'),
 (20,'Canada','CAN'),
 (31,'Bahamas','BHM'),
